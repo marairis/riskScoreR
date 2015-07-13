@@ -167,7 +167,7 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
   checkmate::assertChoice(type, c("score", "response", "prob"))
 
   class <- as.character(riskScorer$formula[[2]])
-  if(length(levels(factor(newdata[[class]]))) != 2) {
+  if(nlevels(newdata[[class]]) != 2) {
     stop("Only two class problems are allowed!")
   }
 
