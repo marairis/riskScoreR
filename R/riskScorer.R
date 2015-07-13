@@ -185,10 +185,13 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
   if(type == "score") {
     return(as.data.frame(scores))
   } else {
-    prob <- scores[, .(id = id, prob = scales::rescale(score))]
+    prob <- scores[, .(id = id,
+                       good = 1-scales::rescale(score),
+                       bad = scales::rescale(score))]
     if(type == "response") {
-      return(as.data.frame(prob[, .(id = id, response=factor(levels(factor(newdata[[class]]))[1+round(prob)]))]))
+      return(as.data.frame(prob[, .(id = id, response=factor(levels(factor(newdata[[class]]))[1+round(prob[["bad"]])]))]))
     } else {
+      data.table::setnames(prob, c("bad", "good"), c(levels(factor(newdata[[class]]))[[2]], levels(factor(newdata[[class]]))[[1]]))
       return(as.data.frame(prob))
     }
   }
