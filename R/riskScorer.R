@@ -175,7 +175,7 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
   checkmate::assertChoice(type, c("score", "response", "prob"))
 
   newdata <- melt(newdata,
-                  id.vars = c("id", riskScorer$target))
+                  id.vars = "id")
   data.table::setkey(newdata, variable)
 
   newdata <- riskScorer$riskModel[newdata]
