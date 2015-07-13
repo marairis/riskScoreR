@@ -168,9 +168,9 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
 
   target <- as.character(riskScorer$formula[[2]])
   target.levels <- levels(factor(newdata[[target]]))
-  if(nlevels(newdata[[target]]) != 2) {
-    stop("Only two class problems are allowed!")
-  }
+  #if(nlevels(newdata[[target]]) != 2) {
+  #  stop("Only two class problems are allowed!")
+  #}
 
   newdata <- melt(newdata,
                   id.vars = c("id", target))
