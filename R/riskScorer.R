@@ -91,7 +91,7 @@ riskScorer <- function(formula, data, weights, weight, beta = TRUE) {
   }
 
   target <- as.character(f[[2]])
-  target.levels <- levels(factor(newdata[[target]]))
+  target.levels <- levels(factor(data[[target]]))
   if(nlevels(data[[target]]) != 2) {
     stop("Only two class problems are allowed!")
   }
