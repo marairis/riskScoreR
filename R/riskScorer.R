@@ -90,6 +90,12 @@ riskScorer <- function(formula, data, weights, weight, beta = TRUE) {
     }
   }
 
+  target <- as.character(f[[2]])
+  target.levels <- levels(factor(newdata[[target]]))
+  if(nlevels(data[[target]]) != 2) {
+    stop("Only two class problems are allowed!")
+  }
+
   if(any(as.character(f[[3]]) != ".")) {
     data <- data.table::as.data.table(model.frame(f, data))
   }
@@ -115,6 +121,8 @@ riskScorer <- function(formula, data, weights, weight, beta = TRUE) {
   out$beta <- beta
   out$weight <- weight
   out$formula <- f
+  out$target <- target
+  out$target.levels <- target.levels
 
   return(out)
 }
@@ -166,14 +174,8 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
   }
   checkmate::assertChoice(type, c("score", "response", "prob"))
 
-  target <- as.character(riskScorer$formula[[2]])
-  target.levels <- levels(factor(newdata[[target]]))
-  if(nlevels(newdata[[target]]) != 2) {
-    stop("Only two class problems are allowed!")
-  }
-
   newdata <- melt(newdata,
-                  id.vars = c("id", target))
+                  id.vars = c("id", riskScorer$target))
   data.table::setkey(newdata, variable)
 
   newdata <- riskScorer$riskModel[newdata]
@@ -187,13 +189,14 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
   if(type == "score") {
     return(as.data.frame(scores))
   } else {
+    # High score is bad, low score is good
     prob <- scores[, .(id = id,
                        good = 1-scales::rescale(score),
                        bad = scales::rescale(score))]
     if(type == "response") {
-      return(as.data.frame(prob[, .(id = id, response=factor(target.levels[1+round(prob[["bad"]])]))]))
+      return(as.data.frame(prob[, .(id = id, response=factor(riskScorer$target.levels[1+round(prob[["bad"]])]))]))
     } else {
-      data.table::setnames(prob, c("bad", "good"), c(target.levels[[2]], target.levels[[1]]))
+      data.table::setnames(prob, c("bad", "good"), c(riskScorer$target.levels[[2]], riskScorer$target.levels[[1]]))
       return(as.data.frame(prob))
     }
   }
