@@ -154,12 +154,13 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score") {
   checkmate::assertClass(riskScorer, "riskScorer")
   if(!checkmate::testClass(newdata, "data.table")) {
     checkmate::assertDataFrame(newdata)
+    rn <- rownames(newdata)
     newdata <- data.table::as.data.table(newdata)
+    rownames(newdata) <- rn
   }
   if(any(as.character(riskScorer$formula[[3]]) != ".")) {
     newdata <- data.table::as.data.table(model.frame(riskScorer, newdata))
   }
-  data.table::setnames(newdata, colnames(newdata), make.names(colnames(newdata)))
   if(!"id" %in% colnames(newdata)) {
     data.table::set(newdata, j="id", value=rownames(newdata))
   }
