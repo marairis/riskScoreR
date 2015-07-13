@@ -11,9 +11,9 @@
 #' @param data    [\code{\link{data.frame}}]\cr
 #'                A data frame (or object coercible by \code{\link{as.data.frame}})
 #'                to a data frame) containing the variables in the model.
-#' @param weights [\code{numeric}]\cr
-#'                A vector of weights to be used in the fitting process. Should
-#'                be a named numeric vector.
+#' @param importance [\code{numeric}]\cr
+#'                A vector of feature weights to be used in the fitting process.
+#'                Should be a named numeric vector.
 #' @param weight  [\code{logical}]\cr
 #'                A logical indicating weather weights should be applied
 #'                (\code{TRUE}) or used to identify alleles with flipped risk
@@ -25,16 +25,17 @@
 #'                giving a threshold as flip criteria, if \code{weight} is
 #'                \code{FALSE}. See 'Details'.
 #'
-#' @details Generally, weights are assumed to be beta coefficients from a GWAS
-#' analysis. In this case, if \code{weight} is \code{TRUE}, the number of risk
-#' alleles are multiplied with it's beta coefficients to get a risk score. If no
-#' beta coefficients are available, a function to transform the given weights to
-#' beta coefficient equivalents is needed to be specified by \code{beta} (might
-#' be \code{\link{identity}}). If \code{weight} is \code{FALSE} no weighting of
-#' risk alleles is performed. In this case a threshold is needed to find flipped
-#' risk alleles by the given weights. If beta coefficients are given (default)
-#' this threshold is set to 0. It would be 1 if the weights are odds ratios.
-#' The parameter \code{beta} can be set to any finite number.
+#' @details Generally, importance values/feature weights are assumed to be beta
+#' coefficients from a GWAS analysis. In this case, if \code{weight} is
+#' \code{TRUE}, the number of risk alleles are multiplied with it's beta
+#' coefficients to get a risk score. If no beta coefficients are available, a
+#' function to transform the given weights to beta coefficient equivalents is
+#' needed to be specified by \code{beta} (might be \code{\link{identity}}). If
+#' \code{weight} is \code{FALSE} no weighting of risk alleles is performed. In
+#' this case a threshold is needed to find flipped risk alleles by the given
+#' weights. If beta coefficients are given (default) this threshold is set to 0.
+#' It would be 1 if the weights are odds ratios. The parameter \code{beta} can
+#' be set to any finite number.
 #'
 #' @return \code{riskScorer} returns an object of class "\code{riskScorer}". An
 #' object of class "\code{riskScorer}" is a list containing the following
@@ -60,13 +61,13 @@
 #' @import data.table
 #'
 #' @export
-riskScorer <- function(formula, data, weights, weight, beta = TRUE) {
+riskScorer <- function(formula, data, importance, weight, beta = TRUE) {
 
   # Check input
   checkmate::assertClass(f <- as.formula(formula), "formula")
   checkmate::assertDataFrame(data)
-  checkmate::assertNumeric(weights, any.missing = FALSE)
-  checkmate::assertNamed(weights)
+  checkmate::assertNumeric(importance, any.missing = FALSE)
+  checkmate::assertNamed(importance)
   checkmate::assertLogical(weight)
   if(weight) {
     if(checkmate::testLogical(beta)) {
@@ -101,7 +102,7 @@ riskScorer <- function(formula, data, weights, weight, beta = TRUE) {
   }
   data.table::setnames(data, colnames(data), make.names(colnames(data)))
 
-  riskModel <- weights[intersect(names(weights), colnames(data))]
+  riskModel <- importance[intersect(names(importance), colnames(data))]
 
   riskModel <- data.table::data.table(variable = names(riskModel),
                                       weight = riskModel,
