@@ -24,6 +24,7 @@
 #'                coefficients, if \code{weight} is \code{TRUE}; a \code{number}
 #'                giving a threshold as flip criteria, if \code{weight} is
 #'                \code{FALSE}. See 'Details'.
+#' @param ...     Other parameter passed from and to other methods.
 #'
 #' @details Generally, importance values/feature weights are assumed to be beta
 #' coefficients from a GWAS analysis. In this case, if \code{weight} is
@@ -61,7 +62,7 @@
 #' @import data.table
 #'
 #' @export
-riskScorer <- function(formula, data, importance, weight, beta = TRUE) {
+riskScorer <- function(formula, data, importance, weight, beta = TRUE, ...) {
 
   # Check input
   checkmate::assertClass(f <- as.formula(formula), "formula")
@@ -144,6 +145,7 @@ riskScorer <- function(formula, data, importance, weight, beta = TRUE) {
 #'                    predicted binary class labels. The alternative
 #'                    "\code{prob}" gives the  predicted probabilities of two
 #'                    classes.
+#' @param ...         Other parameter passed from and to other methods.
 #'
 #' @details Predicted probabilities are obtained by rescaling the distribution
 #' of scores to \eqn{[0,1]}. Predicted class labels are obtained by rounding the
@@ -157,7 +159,7 @@ riskScorer <- function(formula, data, importance, weight, beta = TRUE) {
 #' @import data.table
 #'
 #' @export
-predict.riskScorer <- function(riskScorer, newdata, type = "score") {
+predict.riskScorer <- function(riskScorer, newdata, type = "score", ...) {
 
   # Check input
   checkmate::assertClass(riskScorer, "riskScorer")

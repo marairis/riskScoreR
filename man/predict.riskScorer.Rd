@@ -4,7 +4,7 @@
 \alias{predict.riskScorer}
 \title{Predict Method for riskScoreR Fits}
 \usage{
-\method{predict}{riskScorer}(riskScorer, newdata, type = "score")
+\method{predict}{riskScorer}(riskScorer, newdata, type = "score", ...)
 }
 \arguments{
 \item{riskScorer}{[\code{\link{riskScorer}}]\cr
@@ -15,12 +15,14 @@ A data frame in which to look for variables with which to
 predict.}
 
 \item{type}{[\code{string}]\cr
-                   The type of prediction required. The default is the
-                   aggregated risk score, i.e. the (un)weighted sum of risk
-                   alleles. The alternative "\code{response}" gives the
-                   predicted binary class labels. The alternative
-                   "\code{prob}" gives the  predicted probabilities of two
-                   classes.}
+The type of prediction required. The default is the
+aggregated risk score, i.e. the (un)weighted sum of risk
+alleles. The alternative "\code{response}" gives the
+predicted binary class labels. The alternative
+"\code{prob}" gives the  predicted probabilities of two
+classes.}
+
+\item{...}{Other parameter passed from and to other methods.}
 }
 \value{
 An object of class "\code{data.frame}" is returned with two columns.

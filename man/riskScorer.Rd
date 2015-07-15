@@ -4,7 +4,7 @@
 \alias{riskScorer}
 \title{Fitting Risk Score Models}
 \usage{
-riskScorer(formula, data, weights, weight, beta = TRUE)
+riskScorer(formula, data, importance, weight, beta = TRUE, ...)
 }
 \arguments{
 \item{formula}{[\code{\link{formula}}]\cr
@@ -16,9 +16,9 @@ be fitted.}
 A data frame (or object coercible by \code{\link{as.data.frame}})
 to a data frame) containing the variables in the model.}
 
-\item{weights}{[\code{numeric}]\cr
-A vector of weights to be used in the fitting process. Should
-be a named numeric vector.}
+\item{importance}{[\code{numeric}]\cr
+A vector of feature weights to be used in the fitting process.
+Should be a named numeric vector.}
 
 \item{weight}{[\code{logical}]\cr
 A logical indicating weather weights should be applied
@@ -26,11 +26,13 @@ A logical indicating weather weights should be applied
 allele (\code{FALSE}).}
 
 \item{beta}{[\code{logical} or \code{function} or \code{number}]\cr
-               Depends on \code{weight}: \code{TRUE}, if weights are beta
-               coefficients; a \code{function} for transformation to beta
-               coefficients, if \code{weight} is \code{TRUE}; a \code{number}
-               giving a threshold as flip criteria, if \code{weight} is
-               \code{FALSE}. See 'Details'.}
+Depends on \code{weight}: \code{TRUE}, if weights are beta
+coefficients; a \code{function} for transformation to beta
+coefficients, if \code{weight} is \code{TRUE}; a \code{number}
+giving a threshold as flip criteria, if \code{weight} is
+\code{FALSE}. See 'Details'.}
+
+\item{...}{Other parameter passed from and to other methods.}
 }
 \value{
 \code{riskScorer} returns an object of class "\code{riskScorer}". An
@@ -60,15 +62,16 @@ by giving a symbolic description of the linear predictor and weights from a,
 for example GWAS, analysis.
 }
 \details{
-Generally, weights are assumed to be beta coefficients from a GWAS
-analysis. In this case, if \code{weight} is \code{TRUE}, the number of risk
-alleles are multiplied with it's beta coefficients to get a risk score. If no
-beta coefficients are available, a function to transform the given weights to
-beta coefficient equivalents is needed to be specified by \code{beta} (might
-be \code{\link{identity}}). If \code{weight} is \code{FALSE} no weighting of
-risk alleles is performed. In this case a threshold is needed to find flipped
-risk alleles by the given weights. If beta coefficients are given (default)
-this threshold is set to 0. It would be 1 if the weights are odds ratios.
-The parameter \code{beta} can be set to any finite number.
+Generally, importance values/feature weights are assumed to be beta
+coefficients from a GWAS analysis. In this case, if \code{weight} is
+\code{TRUE}, the number of risk alleles are multiplied with it's beta
+coefficients to get a risk score. If no beta coefficients are available, a
+function to transform the given weights to beta coefficient equivalents is
+needed to be specified by \code{beta} (might be \code{\link{identity}}). If
+\code{weight} is \code{FALSE} no weighting of risk alleles is performed. In
+this case a threshold is needed to find flipped risk alleles by the given
+weights. If beta coefficients are given (default) this threshold is set to 0.
+It would be 1 if the weights are odds ratios. The parameter \code{beta} can
+be set to any finite number.
 }
 
