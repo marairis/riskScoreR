@@ -189,7 +189,7 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score", ...) {
     prob <- data.frame(good = 1-scales::rescale(scores),
                        bad = scales::rescale(scores))
     if(type == "response") {
-      prob$response <- riskScorer$target.levels[1+round(prob$bad)]
+      prob$response <- factor(riskScorer$target.levels[1+round(prob$bad)])
       return(subset(prob, select = response))
     } else {
       colnames(prob) <- riskScorer$target.levels
