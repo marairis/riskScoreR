@@ -45,9 +45,9 @@
 #'  \item{\code{riskModel}}{An object of class \code{\link{data.table}}
 #'                          specifying the risk model. Contains a column
 #'                          \code{variable} with the name of the variant, a
-#'                          column \code{weight} specifying its weight and an
-#'                          optional column \code{flip} indicating if the risk
-#'                          alleles of this variant have to be flipped.}
+#'                          column \code{weight} specifying its weight and a
+#'                          column \code{flip} indicating if the risk alleles of
+#'                          this variant have to be flipped.}
 #'  \item{\code{beta}}{Depends on \code{weight}: \code{TRUE}, if weights are beta
 #'                     coefficients; a \code{function} for transformation to
 #'                     beta coefficients, if \code{weight} is \code{TRUE}; a
@@ -152,10 +152,12 @@ riskScorer <- function(formula, data, importance, weight, beta = TRUE, ...) {
 #' of scores to \eqn{[0,1]}. Predicted class labels are obtained by rounding the
 #' predicted probabilites.
 #'
-#' @return An object of class "\code{data.frame}" is returned with two columns.
-#' First column is the id. If \code{type = "score"} (un)weighted risk scores; if
-#' \code{type = "respons"} predicted class labels; if \code{type = "prob"}
-#' predicted class probabilities are returend in the second column.
+#' @return Depends on type: if \code{type = "score"} a \code{data.frame} with
+#' one column holding the raw scores, i.e. (un)weighted sum of risk alleles; if
+#' \code{type = "prob"} a \code{data.frame} with two columns, named as the two
+#' factor levels in the response variable of the \code{riskScorer} object, giving
+#' the probabilities of the respective factor level; if \code{type = "response"}
+#' a \code{data.frame} holding the factor level with highest probability.
 #'
 #' @import data.table
 #'
