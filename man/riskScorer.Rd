@@ -42,9 +42,9 @@ components:
  \item{\code{riskModel}}{An object of class \code{\link{data.table}}
                          specifying the risk model. Contains a column
                          \code{variable} with the name of the variant, a
-                         column \code{weight} specifying its weight and an
-                         optional column \code{flip} indicating if the risk
-                         alleles of this variant have to be flipped.}
+                         column \code{weight} specifying its weight and a
+                         column \code{flip} indicating if the risk alleles of
+                         this variant have to be flipped.}
  \item{\code{beta}}{Depends on \code{weight}: \code{TRUE}, if weights are beta
                     coefficients; a \code{function} for transformation to
                     beta coefficients, if \code{weight} is \code{TRUE}; a

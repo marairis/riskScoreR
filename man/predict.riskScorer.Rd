@@ -25,10 +25,12 @@ classes.}
 \item{...}{Other parameter passed from and to other methods.}
 }
 \value{
-An object of class "\code{data.frame}" is returned with two columns.
-First column is the id. If \code{type = "score"} (un)weighted risk scores; if
-\code{type = "respons"} predicted class labels; if \code{type = "prob"}
-predicted class probabilities are returend in the second column.
+Depends on type: if \code{type = "score"} a \code{data.frame} with
+one column holding the raw scores, i.e. (un)weighted sum of risk alleles; if
+\code{type = "prob"} a \code{data.frame} with two columns, named as the two
+factor levels in the response variable of the \code{riskScorer} object, giving
+the probabilities of the respective factor level; if \code{type = "response"}
+a \code{data.frame} holding the factor level with highest probability.
 }
 \description{
 Obtains predictions from a fitted risk score model object.
