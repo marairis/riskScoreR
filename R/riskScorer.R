@@ -110,6 +110,7 @@ riskScorer <- function(formula, data, importance, weight, beta = TRUE, ...) {
                                       key = "variable")
 
   if(weight) {
+    riskModel[, flip := FALSE]
     riskModel[, weight := beta(weight)]
   } else {
     # find variants to flip risk allele
@@ -163,43 +164,35 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score", ...) {
 
   # Check input
   checkmate::assertClass(riskScorer, "riskScorer")
-  if(!checkmate::testClass(newdata, "data.table")) {
-    checkmate::assertDataFrame(newdata)
-    rn <- rownames(newdata)
-    newdata <- data.table::as.data.table(newdata)
-    rownames(newdata) <- rn
-  }
-  if(any(as.character(riskScorer$formula[[3]]) != ".")) {
-    newdata <- data.table::as.data.table(model.frame(riskScorer, newdata))
-  }
-  if(!"id" %in% colnames(newdata)) {
-    data.table::set(newdata, j="id", value=rownames(newdata))
-  }
+  checkmate::assertDataFrame(newdata)
   checkmate::assertChoice(type, c("score", "response", "prob"))
 
-  newdata <- melt(newdata,
-                  id.vars = "id")
-  data.table::setkey(newdata, variable)
-
-  newdata <- riskScorer$riskModel[newdata]
-
-  if(!riskScorer$weight){
-    newdata[flip == TRUE, value := 2-value]
+  # Select variables in risk model
+  if(!all(riskScorer$riskModel$variable %in% colnames(newdata))) {
+    stop("Some variables listed in the given risk model are not present in newdata!")
+  } else {
+    newdata <- as.matrix(subset(newdata, select = riskScorer$riskModel$variable))
   }
 
-  scores <- newdata[, .(score=sum(value*weight)), by = id]
+  if(riskScorer$weight) {
+    # don't flip genotypes
+    scores <- newdata %*% riskScorer$riskModel$weight
+  } else {
+    # flip genotypes
+    scores <- abs(((rep_len(2, length.out = nrow(newdata))) %*% t(riskScorer$riskModel$flip)) - newdata) %*% riskScorer$riskModel$weight
+  }
 
   if(type == "score") {
-    return(as.data.frame(scores))
+    return(data.frame(score = scores))
   } else {
     # High score is bad, low score is good
-    prob <- scores[, .(id = id,
-                       good = 1-scales::rescale(score),
-                       bad = scales::rescale(score))]
+    prob <- data.frame(good = 1-scales::rescale(scores),
+                       bad = scales::rescale(scores))
     if(type == "response") {
-      return(as.data.frame(prob[, .(id = id, response=factor(riskScorer$target.levels[1+round(prob[["bad"]])]))]))
+      prob$response <- riskScorer$target.levels[1+round(prob$bad)]
+      return(subset(prob, select = response))
     } else {
-      data.table::setnames(prob, c("bad", "good"), c(riskScorer$target.levels[[2]], riskScorer$target.levels[[1]]))
+      colnames(prob) <- riskScorer$target.levels
       return(as.data.frame(prob))
     }
   }
