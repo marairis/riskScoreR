@@ -1,10 +1,11 @@
 Package: riskScoreR
 Type: Package
 Title: Fitting Risk Score Models
-Version: 0.4.1.1
+Version: 0.5
 Date: 2015-07-10
 Authors@R: person("Damian", "Gola", email = "gola@imbs.uni-luebeck.de", role = c("aut", "cre"))
 Description: riskScoreR is used to fit a risk score models, specified by giving a symbolic description of the linear predictor and weights from a, for example GWAS, analysis.
 Imports: data.table, checkmate, scales
 License: GPL-3
 LazyData: TRUE
+RoxygenNote: 6.0.1

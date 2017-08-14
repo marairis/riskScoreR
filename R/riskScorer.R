@@ -1,3 +1,7 @@
+
+flip <- NULL
+response <- NULL
+
 #' @title Fitting Risk Score Models
 #'
 #' @description \code{riskScorer} is used to fit a risk score models, specified
@@ -11,6 +15,10 @@
 #' @param data    [\code{\link{data.frame}}]\cr
 #'                A data frame (or object coercible by \code{\link{as.data.frame}})
 #'                to a data frame) containing the variables in the model.
+#' @param y.name  [\code{string}]\cr
+#'                A string giving the response variable name.
+#' @param feature.names [\code{\link{character}}]\cr
+#'                      A character vector giving the feature names.
 #' @param importance [\code{numeric}]\cr
 #'                A vector of feature weights to be used in the fitting process.
 #'                Should be a named numeric vector.
@@ -62,13 +70,28 @@
 #' @import data.table
 #'
 #' @export
-riskScorer <- function(formula, data, importance, weight, beta = TRUE, ...) {
+riskScorer <- function(formula, data, y.name, feature.names, importance, weight, beta = TRUE, ...) {
 
   # Check input
-  checkmate::assertClass(f <- as.formula(formula), "formula")
-  checkmate::assertDataFrame(data)
+  if(!missing(formula)) {
+    checkmate::assertClass(f <- stats::as.formula(formula), "formula")
+  }
   checkmate::assertNumeric(importance, any.missing = FALSE)
   checkmate::assertNamed(importance)
+  checkmate::assertDataFrame(data, col.names = "named")
+  if(!missing(y.name)) {
+    checkmate::assertString(y.name, na.ok = FALSE, null.ok = FALSE)
+    checkmate::assertSubset(y.name, colnames(data), empty.ok = FALSE)
+    y <- factor(data[[y.name]])
+    checkmate::assertFactor(y, n.levels = 2)
+    target <- y.name
+    target.levels <- levels(y)
+    f <- stats::as.formula(sprintf("%s ~ %s", y.name, paste(feature.names, collapse = " + ")))
+  }
+  if(!missing(feature.names)) {
+    checkmate::assertCharacter(feature.names, all.missing = FALSE, any.missing = FALSE, null.ok = FALSE)
+    checkmate::assertSubset(feature.names, names(importance))
+  }
   checkmate::assertLogical(weight)
   if(weight) {
     if(checkmate::testLogical(beta)) {
@@ -92,18 +115,22 @@ riskScorer <- function(formula, data, importance, weight, beta = TRUE, ...) {
     }
   }
 
-  target <- as.character(f[[2]])
-  target.levels <- levels(factor(data[[target]]))
-  if(nlevels(data[[target]]) != 2) {
-    stop("Only two class problems are allowed!")
-  }
+  if(missing(feature.names)) {
+    target <- as.character(f[[2]])
+    target.levels <- levels(factor(data[[target]]))
+    if(nlevels(data[[target]]) != 2) {
+      stop("Only two class problems are allowed!")
+    }
 
-  if(any(as.character(f[[3]]) != ".")) {
-    data <- data.table::as.data.table(model.frame(f, data))
-  }
-  data.table::setnames(data, colnames(data), make.names(colnames(data)))
+    if(any(as.character(f[[3]]) != ".")) {
+      data <- data.table::as.data.table(stats::model.frame(f, data))
+    }
+    data.table::setnames(data, colnames(data), make.names(colnames(data)))
 
-  riskModel <- importance[intersect(names(importance), colnames(data))]
+    riskModel <- importance[intersect(names(importance), colnames(data))]
+  } else {
+    riskModel <- importance[intersect(names(importance), feature.names)]
+  }
 
   riskModel <- data.table::data.table(variable = names(riskModel),
                                       weight = riskModel,
