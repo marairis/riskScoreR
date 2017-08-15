@@ -50,7 +50,7 @@ response <- NULL
 #' object of class "\code{riskScorer}" is a list containing the following
 #' components:
 #' \describe{
-#'  \item{\code{riskModel}}{An object of class \code{\link{data.table}}
+#'  \item{\code{risk_model}}{An object of class \code{\link{data.table}}
 #'                          specifying the risk model. Contains a column
 #'                          \code{variable} with the name of the variant, a
 #'                          column \code{weight} specifying its weight and a
@@ -75,6 +75,15 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
   # Check input
   if(!missing(formula)) {
     checkmate::assertClass(f <- stats::as.formula(formula), "formula")
+    y.name <- all.vars(f[-3])
+    feature.names <- all.vars(f[-2])
+    if("." %in% feature.names) {
+      feature.names <- setdiff(colnames(data), y.name)
+    }
+  } else {
+    if(missing(y.name) && missing(feature.names)) {
+      stop("If not providing a formula, 'y.name' and 'feature.names' must be given!")
+    }
   }
   checkmate::assertNumeric(importance, any.missing = FALSE)
   checkmate::assertNamed(importance)
@@ -85,12 +94,11 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
     y <- factor(data[[y.name]])
     checkmate::assertFactor(y, n.levels = 2)
     target <- y.name
-    target.levels <- levels(y)
-    f <- stats::as.formula(sprintf("%s ~ %s", y.name, paste(feature.names, collapse = " + ")))
+    target_levels <- levels(y)
   }
   if(!missing(feature.names)) {
     checkmate::assertCharacter(feature.names, all.missing = FALSE, any.missing = FALSE, null.ok = FALSE)
-    checkmate::assertSubset(feature.names, names(importance))
+    checkmate::assertSubset(feature.names, names(importance), empty.ok = FALSE)
   }
   checkmate::assertLogical(weight)
   if(weight) {
@@ -115,44 +123,29 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
     }
   }
 
-  if(missing(feature.names)) {
-    target <- as.character(f[[2]])
-    target.levels <- levels(factor(data[[target]]))
-    if(nlevels(data[[target]]) != 2) {
-      stop("Only two class problems are allowed!")
-    }
+  risk_model <- importance[intersect(names(importance), feature.names)]
 
-    if(any(as.character(f[[3]]) != ".")) {
-      data <- data.table::as.data.table(stats::model.frame(f, data))
-    }
-    data.table::setnames(data, colnames(data), make.names(colnames(data)))
-
-    riskModel <- importance[intersect(names(importance), colnames(data))]
-  } else {
-    riskModel <- importance[intersect(names(importance), feature.names)]
-  }
-
-  riskModel <- data.table::data.table(variable = names(riskModel),
-                                      weight = riskModel,
+  risk_model <- data.table::data.table(variable = names(risk_model),
+                                      weight = risk_model,
                                       key = "variable")
 
   if(weight) {
-    riskModel[, flip := FALSE]
-    riskModel[, weight := beta(weight)]
+    risk_model[, flip := FALSE]
+    risk_model[, weight := beta(weight)]
   } else {
     # find variants to flip risk allele
-    riskModel[, flip := weight < beta]
-    riskModel[, weight := 1]
+    risk_model[, flip := weight < beta]
+    risk_model[, weight := 1]
   }
 
   out <- list()
   class(out) <- "riskScorer"
-  out$riskModel <- riskModel
+  out$call <- match.call()
+  out$risk_model <- risk_model
   out$beta <- beta
   out$weight <- weight
-  out$formula <- f
   out$target <- target
-  out$target.levels <- target.levels
+  out$target_levels <- target_levels
 
   return(out)
 }
@@ -161,7 +154,7 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
 #'
 #' @description Obtains predictions from a fitted risk score model object.
 #'
-#' @param riskScorer  [\code{\link{riskScorer}}]\cr
+#' @param risk.scorer [\code{\link{riskScorer}}]\cr
 #'                    A fitted object of class "\code{riskScorer}".
 #' @param newdata     [\code{data.frame}]\cr
 #'                    A data frame in which to look for variables with which to
@@ -189,26 +182,26 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
 #' @import data.table
 #'
 #' @export
-predict.riskScorer <- function(riskScorer, newdata, type = "score", ...) {
+predict.riskScorer <- function(risk.scorer, newdata, type = "score", ...) {
 
   # Check input
-  checkmate::assertClass(riskScorer, "riskScorer")
+  checkmate::assertClass(risk.scorer, "riskScorer")
   checkmate::assertDataFrame(newdata)
   checkmate::assertChoice(type, c("score", "response", "prob"))
 
   # Select variables in risk model
-  if(!all(riskScorer$riskModel$variable %in% colnames(newdata))) {
+  if(!all(risk.scorer$risk_model$variable %in% colnames(newdata))) {
     stop("Some variables listed in the given risk model are not present in newdata!")
   } else {
-    newdata <- as.matrix(subset(newdata, select = riskScorer$riskModel$variable))
+    newdata <- as.matrix(subset(newdata, select = risk.scorer$risk_model$variable))
   }
 
-  if(riskScorer$weight) {
+  if(risk.scorer$weight) {
     # don't flip genotypes
-    scores <- newdata %*% riskScorer$riskModel$weight
+    scores <- newdata %*% risk.scorer$risk_model$weight
   } else {
     # flip genotypes
-    scores <- abs(((rep_len(2, length.out = nrow(newdata))) %*% t(riskScorer$riskModel$flip)) - newdata) %*% riskScorer$riskModel$weight
+    scores <- abs(((rep_len(2, length.out = nrow(newdata))) %*% t(risk.scorer$risk_model$flip)) - newdata) %*% risk.scorer$risk_model$weight
   }
 
   if(type == "score") {
@@ -218,10 +211,10 @@ predict.riskScorer <- function(riskScorer, newdata, type = "score", ...) {
     prob <- data.frame(good = 1-scales::rescale(scores),
                        bad = scales::rescale(scores))
     if(type == "response") {
-      prob$response <- factor(riskScorer$target.levels[1+round(prob$bad)])
+      prob$response <- factor(risk.scorer$target_levels[1+round(prob$bad)])
       return(subset(prob, select = response))
     } else {
-      colnames(prob) <- riskScorer$target.levels
+      colnames(prob) <- risk.scorer$target_levels
       return(as.data.frame(prob))
     }
   }
