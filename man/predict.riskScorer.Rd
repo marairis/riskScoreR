@@ -4,10 +4,10 @@
 \alias{predict.riskScorer}
 \title{Predict Method for riskScoreR Fits}
 \usage{
-\method{predict}{riskScorer}(riskScorer, newdata, type = "score", ...)
+\method{predict}{riskScorer}(risk.scorer, newdata, type = "score", ...)
 }
 \arguments{
-\item{riskScorer}{[\code{\link{riskScorer}}]\cr
+\item{risk.scorer}{[\code{\link{riskScorer}}]\cr
 A fitted object of class "\code{riskScorer}".}
 
 \item{newdata}{[\code{data.frame}]\cr

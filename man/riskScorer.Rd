@@ -46,7 +46,7 @@ giving a threshold as flip criteria, if \code{weight} is
 object of class "\code{riskScorer}" is a list containing the following
 components:
 \describe{
- \item{\code{riskModel}}{An object of class \code{\link{data.table}}
+ \item{\code{risk_model}}{An object of class \code{\link{data.table}}
                          specifying the risk model. Contains a column
                          \code{variable} with the name of the variant, a
                          column \code{weight} specifying its weight and a
