@@ -146,6 +146,7 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
   out$weight <- weight
   out$target <- target
   out$target_levels <- target_levels
+  out$max_score <- risk_model[, sum(2*weight)]
 
   return(out)
 }
@@ -208,8 +209,8 @@ predict.riskScorer <- function(risk.scorer, newdata, type = "score", ...) {
     return(data.frame(score = scores))
   } else {
     # High score is bad, low score is good
-    prob <- data.frame(good = 1-scales::rescale(scores),
-                       bad = scales::rescale(scores))
+    prob <- data.frame(good = 1-scores/risk.scorer$max_score,
+                       bad = scores/risk.scorer$max_score)
     if(type == "response") {
       prob$response <- factor(risk.scorer$target_levels[1+round(prob$bad)])
       return(subset(prob, select = response))
