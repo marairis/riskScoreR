@@ -125,6 +125,9 @@ optimized_measure <- function(a, balance, data, importance, k, grid.res, weight,
                           balance = balance, 
                           data = data)
     cv_auc_penalized[j] <- mean(cv_auc_values) - cv_penalty
+    if (cv_auc_penalized[j] < 0) {
+      cv_auc_penalized[j] <- 0
+    } 
     message("Current number of SNPs:", w_candidates[j],"  Averaged AUC:", cv_auc_penalized[j], " (Penalty:", cv_penalty, ")")
     return(cv_auc_penalized[j])
   }
