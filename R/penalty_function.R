@@ -23,13 +23,13 @@
 #' @return Optimized number of SNPs w to use in final model.
 #'
 #' @export
-
 optimized_measure <- function(a, balance, data, importance, k, grid.res, weight, formula, beta, ...) {
   ## die anderen variablen auch noch checken?
   # (i) check input and set default values
   checkmate::assertNumber(a)
   checkmate::assertNumber(balance)
   checkmate::assertDataFrame(data, col.names = "named")
+  checkmate::assertNumeric(importance, any.missing = FALSE)
   checkmate::assertNamed(importance)
   if(missing(k)) {
     checkmate::assertNumber(k <- 10)
@@ -50,7 +50,16 @@ optimized_measure <- function(a, balance, data, importance, k, grid.res, weight,
       stop("If not providing a formula, 'y.name' and 'feature.names' must be given!")
     }
   }
-
+  # make sure that feature.names and importance/training/testing column names match
+  ## mit "x1" nicht ideal, allgemeine abfrage fuer x/snp?
+  if("x1" %in% feature.names) {
+    colnames(data) <- c(paste("x", (1:(ncol(data)-1)), sep = ""), y.name)
+    names(importance) <-  paste("x", (1:(ncol(data)-1)), sep = "")
+  } else if ("snp1" %in% feature.names) {
+    colnames(data) <- c(paste("snp", (1:(ncol(data)-1)), sep = ""), y.name)
+    names(importance) <-  paste("snp", (1:(ncol(data)-1)), sep = "")
+  } 
+  
   # initialize penalty function
   penalty <- function(a, w, balance, data) {
     step <- ceiling(log(((w/a)+2)/2, 1.5))
@@ -67,67 +76,79 @@ optimized_measure <- function(a, balance, data, importance, k, grid.res, weight,
   variables_ranked <- sort(importance, decreasing = TRUE)
   # shuffle data for crossvalidation
   perm_idx <- sample(nrow(data))
-  # calculate possible values for w, ncol(data)-1 wegen state
+  # calculate possible values for w
   w_candidates <- sapply(list(1:grid.res), function(s) ((ncol(data)-1)/grid.res)*s)
+  cv_auc_penalized <- double(grid.res)
+  
   # describe modelling function: does a cross-validation and returns performance for current w
-
   modelling <- function(j) {
-    cv_auc_sum <- 0
-    for (i in 0:k-1) {
+    cv_auc_values <- double(k)
+    for (i in 0:(k-1)) {
       # select train and test data
       cv_test <- data[perm_idx[((n_data/k)*i+1):((n_data/k)*(i+1))], ]
       cv_train <- data[-perm_idx[((n_data/k)*i+1):((n_data/k)*(i+1))], ]
 
       # set up model
       # create parameters adjusted to w
-      ## noch allgemein formulieren
       #cv_formula <- as.formula(paste("state ~", paste(paste0("x", 1:w_candidates[j]), collapse = "+")))
       cv_y.name <- y.name
-      cv_feature.names <- feature.names[1:w_candidates[j]]
-      cv_importance <- unlist(importance_data)[1:w_candidates[j]]
-      cv_data <- cv_train[, 1:w_candidates[j]]
-      cv_data$state <- cv_train$state
-
+      ### in var.ranked: x statt snp, da spaltenname x in importance?
+      cv_feature.names <- names(variables_ranked[1:w_candidates[j]])
+      cv_importance <- variables_ranked[1:w_candidates[j]]
+      cv_data <- dplyr::select(cv_train, cv_feature.names, y.name)
+      
       cv_model <- riskScorer(data = cv_data,
                              y.name = cv_y.name,
                              feature.names = cv_feature.names,
                              importance = cv_importance,
-                             weight,
+                             weight = weight,
                              beta = TRUE)
 
       # validate on test data
-      cv_newdata <- cv_test[,1:w_candidates[j]]
-      colnames(cv_newdata) <- cv_feature.names
-      cv_newdata$state <- cv_test$state
+      cv_newdata <- dplyr::select(cv_test, cv_feature.names, y.name)
       cv_prediction <- predict.riskScorer(risk.scorer = cv_model,
                                           newdata = cv_newdata,
-                                          type = "response")
+                                          type = "prob")
 
       # get auc
-      cv_auc <- mlr::measureAUC(probabilities = cv_prediction,
-                                truth = cv_test$state,
-                                negative = 0,
-                                positive = 1)
-      #average auc over all k
-      cv_auc_sum <- cv_auc_sum + cv_auc
+      ## welche spalte uebergeben?
+      cv_auc_values[(i+1)] <- mlr::measureAUC(probabilities = cv_prediction$`1`,
+                                              truth = cv_test[, y.name],
+                                              negative = 1,
+                                              positive = 0)
     }
+    
     # substract current penalty from averaged auc
-    cv_penalty <- penalty(a, w_candidates[j], balance, data)
-    cv_auc_average <- cv_auc_sum/k - cv_penalty
-    message("Current number of SNPs:", w_candidates[j],"  Average AUC:", cv_auc_average, " (Penalty:", cv_penalty, ")")
-
+    ## wenn auc < 0.5: 1-auc, dh modell umdrehen, wie?
+    cv_penalty <- penalty(a = a,
+                          w = w_candidates[j], 
+                          balance = balance, 
+                          data = data)
+    cv_auc_penalized[j] <- mean(cv_auc_values) - cv_penalty
+    message("Current number of SNPs:", w_candidates[j],"  Averaged AUC:", cv_auc_penalized[j], " (Penalty:", cv_penalty, ")")
+    return(cv_auc_penalized[j])
   }
-  # get all aucs
+  # get all aucs as an vector (vlt besser dataframe? mit anzahl snps, auc, penalty?)
   get_models <- sapply(X = 1:grid.res,
                        FUN = modelling)
+  
+  # noch machen: auc > 1, ausgabe finales modell -> auswahl aus get_models
 
   # select max auc
-  ## welche spalte? annahme: 1. spalte w, 2. spalte auc
-  idx_w <- max(get_models[,2])
-  message("Best result for w = ",get_models[idx_w,1],"( AUC = ",get_models[idx_w,2],")")
+  idx_w <- which.max(get_models)
+  message("Best result for w = " ,w_candidates[idx_w], " (AUC = ", get_models[idx_w], ")")
 
-  # save final model for prediction
-  fin_model <- riskScorer(formula, data[, 1:w_candidates[idx_w]], y.name, feature.names, importance, weight, beta = TRUE)
+  # get final model for prediction
+  fin_feature.names <- names(variables_ranked[1:w_candidates[idx_w]]) 
+  fin_y.name <- y.name
+  fin_importance <- variables_ranked[1:w_candidates[idx_w]]
+  fin_data <- dplyr::select(data, fin_feature.names, fin_y.name)
+  
+  fin_model <- riskScorer(data = fin_data, 
+                          y.name = fin_y.name, 
+                          feature.names = fin_feature.names,
+                          importance = fin_importance,
+                          weight = weight, 
+                          beta = TRUE)
   return(fin_model)
-
 }

@@ -8,4 +8,4 @@ Description: riskScoreR is used to fit a risk score models, specified by giving 
 Imports: data.table, checkmate, scales
 License: GPL-3
 LazyData: TRUE
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
