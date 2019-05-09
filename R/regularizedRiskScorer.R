@@ -45,8 +45,11 @@ regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, wei
     }
   }
   
+  # sort importance
+  imp_sorted <- importance[order(abs(importance), decreasing = TRUE)]
+  
   # initialize penalty function
-  penalty <- function(a, w, balance, data) {
+  penalty <- function(a, w, balance) {
     step <- ceiling(log(((w/a)+2)/2, 1.5))
     current_penalty <- step*balance
     return(current_penalty)
@@ -54,19 +57,24 @@ regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, wei
 
   # (ii) initilize optimization problem (min)
   dev_vector <- matrix(0, nrow = length(importance), ncol = 1)
-  dev_imp <- sort(importance, decreasing = TRUE)
+  dev_imp <- rep(0,length(importance))
+  names(dev_imp) <- names(importance_data)
+  # get intervall of possible scores
   min_resp <- sum(importance[importance<0])*2
   max_resp <- sum(importance[importance>0])*2
   interval_resp <- max_resp - min_resp
   # transform 0/1 to -1/1
   dev_truth <- (2*data[, y.name])-1
+  dev_data <- as.matrix(data[, names(importance)])
   
   dev_modelling <- function(w) {
+    # only use importance 1:w, other values = 0
+    dev_imp[names(imp_sorted[1:w])] <- imp_sorted[1:w]
     # return probability
-    resp_temp <- as.matrix(data[, names(dev_imp[1:w])])%*%dev_imp[1:w]
+    resp_temp <- dev_data%*%dev_imp
     resp_temp <- resp_temp/interval_resp 
-    # get devianz for each model 
-    dev_vector[w] <- -log(1+exp(-2*dev_truth%*%resp_temp))
+    # get devianz for each model
+    dev_vector[w] <- sum(-log(1+exp(-2*dev_truth*(2*resp_temp-1))))
   }
   # returns vector with deviance for each model
   mod_deviance <- sapply(X = 1:length(importance), 
@@ -74,21 +82,21 @@ regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, wei
   
   # get penalty
   mod_penalty <- sapply(X = 1: length(mod_deviance),
-                        FUN = function (s) penalty(w = s, a = a, balance = balance, data = data))
+                        FUN = function (s) penalty(w = s, a = a, balance = balance))
   
   # solve optimization problem: max(devianz - penalty)
   best_model <- which.max(mod_deviance - mod_penalty)
   
   # get final model for prediction
-  fin_importance <- sort(importance, decreasing = TRUE)[1:best_model]
-  fin_feature.names <- names(fin_importance) 
+  fin_imp <- imp_sorted[1:best_model]
+  fin_feature.names <- names(fin_imp) 
   fin_y.name <- y.name
-  fin_data <- dplyr::select(data, names(fin_importance), fin_y.name)
+  fin_data <- dplyr::select(data, fin_feature.names, y.name)
   
   fin_model <- riskScorer(data = fin_data, 
                           y.name = fin_y.name, 
-                          feature.names = names(fin_importance),
-                          importance = fin_importance,
+                          feature.names = names(fin_imp),
+                          importance = fin_imp,
                           weight = weight, 
                           beta = TRUE)
   return(fin_model)
