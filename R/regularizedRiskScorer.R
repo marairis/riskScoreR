@@ -1,37 +1,60 @@
 
-#' @title Optimization of number of used SNPs.
+#' @title Fitting regularized Risk Score Models based on importance of SNPs
 #'
-#' @description Optimizes number of used SNPs w used in final model based on penaly function.
+#' @description \{regularizedRiskScorer} is used to fit a regularized risk score models based on 
+#' importance of SNPs, the number of SNPs used in the final model is calculated by an optimization
+#' problem based on the models deviance less the current penalty for the number of used SNPs in the model.
 #'
 #' @param a [\code{integer}]\cr
-#'          Initial number of SNPs.
+#'          Number of SNPs used for inital penalty step, e.g. size of genotyping chip.
+#' @param balance [\code{double}]\cr
+#'          Weight of penalty.
+#' @param  [\code{logarithmical}]\cr 
+#'          A logical indicating weather penalty step size should be equal (\code{FALSE}) or logarithmic (\code{TRUE}).
+#'          Default is \code{TRUE}.
 #' @param data [\code{\link{data.frame}}]\cr
 #'          A data frame (or object coercible by \code{\link{as.data.frame}})
 #'          to a data frame) containing the variables in the model.
-#' @param grid.res [\code{integer}]\cr
-#'          Resolution of the grid for w, e.g. number of equal-sized steps. Default is 10.
 #' @param importance [\code{numeric}]\cr
 #'          A vector of feature weights to be used in the fitting process.
 #'          Should be a named numeric vector.
-#' @param k [\code{integer}]\cr
-#'          Number of folds used in cross-validation to find best w. Default is 10.
-#' @param balance [\code{double}]\cr
-#'          Weight of penalty.
+#' @param y.name [\code{string}]\cr
+#'          A string giving the response variable name.
+#' @param feature.names [\code{\link{character}}]\cr
+#'          A character vector giving the feature names.
+#' @param weight [\code{logical}]\cr
+#'          A logical indicating weather weights should be applied
+#'          (\code{TRUE}) or used to identify alleles with flipped risk
+#'          allele (\code{FALSE}).
+#' @param beta [\code{logical} or \code{function} or \code{number}]\cr
+#'          Depends on \code{weight}: \code{TRUE}, if weights are beta
+#'          coefficients; a \code{function} for transformation to beta
+#'          coefficients, if \code{weight} is \code{TRUE}; a \code{number}
+#'          giving a threshold as flip criteria, if \code{weight} is
+#'          \code{FALSE}. See 'Details'.
 #' @param ...
 #'          Other parameter passed from and to other methods.
 #'
-#' @return Optimized number of SNPs w to use in final model.
-#'
+#' @details Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of genotyping chip and use 
+#' equal step size to determine the best amount of identical genotyping chips. Set \code{a} as a an inital step size an use 
+#' logarithmic step size to regularize amount of SNPs (preferred all on one chip). 
+#' 
+#' @return 
+#' \code{regularizedRiskScorer} returns an object of class "\code{riskScorer}". For more information see 
+#' \code{\link{riskScorer}}.
+#' 
 #' @export
 #' 
-regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, weight, formula, beta, ...) {
-  # (i) check input and set default values
-  checkmate::assertNumber(a)
-  checkmate::assertNumber(balance)
+regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, weight, formula, beta, ...) {
+  # check input and set default values if necessary
+  checkmate::assertNumber(a, lower = 1, upper = length(importance))
+  checkmate::assertNumber(balance, lower = 1)
+  if(missing(logarithmical)) {
+    checkmate::assertLogical(logarithmical <- TRUE)
+  }
   checkmate::assertDataFrame(data, col.names = "named")
   checkmate::assertNumeric(importance, any.missing = FALSE)
   checkmate::assertNamed(importance)
-
   if(!missing(formula)) {
     checkmate::assertClass(f <- stats::as.formula(formula), "formula")
     y.name <- all.vars(f[-3])
@@ -45,17 +68,23 @@ regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, wei
     }
   }
   
+  # initialize penalty function (logarithmical or equal step size)
+  if(logarithmical) {
+      steps <- ceiling(log(((length(importance)/a)+2)/2, 1.5))
+      first_snpstep <- sapply(0:steps, function (s) ceiling(a*((-2^(1-s))*(2^(s)-3^(s)))))
+      first_snpstep[1] <- 1
+      first_snpstep[which(first_snpstep > length(importance))] <- length(importance)
+    } else {
+      steps <- ceiling(length(importance)/a)
+      first_snpstep <- sapply(0:steps, function (s) a*s)
+      first_snpstep[1] <- 1
+      first_snpstep[which(first_snpstep > length(importance))] <- length(importance)
+    }
+  
   # sort importance
   imp_sorted <- importance[order(abs(importance), decreasing = TRUE)]
-  
-  # initialize penalty function
-  penalty <- function(a, w, balance) {
-    step <- ceiling(log(((w/a)+2)/2, 1.5))
-    current_penalty <- step*balance
-    return(current_penalty)
-  }
 
-  # (ii) initilize optimization problem (min)
+  # initialize optimization problem (min)
   dev_vector <- matrix(0, nrow = length(importance), ncol = 1)
   dev_imp <- rep(0,length(importance))
   names(dev_imp) <- names(importance_data)
@@ -63,7 +92,8 @@ regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, wei
   min_resp <- sum(importance[importance<0])*2
   max_resp <- sum(importance[importance>0])*2
   interval_resp <- max_resp - min_resp
-  # transform 0/1 to -1/1
+  
+  # transform response from 0/1 to -1/1
   dev_truth <- (2*data[, y.name])-1
   dev_data <- as.matrix(data[, names(importance)])
   
@@ -76,16 +106,18 @@ regularizedRiskScorer <- function(a, balance, data, importance, k, grid.res, wei
     # get devianz for each model
     dev_vector[w] <- sum(-log(1+exp(-2*dev_truth*(2*resp_temp-1))))
   }
-  # returns vector with deviance for each model
   mod_deviance <- sapply(X = 1:length(importance), 
                        FUN = dev_modelling)
   
   # get penalty
-  mod_penalty <- sapply(X = 1: length(mod_deviance),
-                        FUN = function (s) penalty(w = s, a = a, balance = balance))
+  mod_resp <- rep(0,length(importance))
   
-  # solve optimization problem: max(devianz - penalty)
-  best_model <- which.max(mod_deviance - mod_penalty)
+  for (i in 1:(length(first_snpstep)-1)) {
+    mod_resp[(first_snpstep[i]):first_snpstep[i+1]] <- mod_deviance[first_snpstep[i]]
+  }
+  
+  # solve optimization problem
+  best_model <- which.max(mod_resp)
   
   # get final model for prediction
   fin_imp <- imp_sorted[1:best_model]

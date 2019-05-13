@@ -2,14 +2,14 @@
 % Please edit documentation in R/regularizedRiskScorer.R
 \name{regularizedRiskScorer}
 \alias{regularizedRiskScorer}
-\title{Optimization of number of used SNPs.}
+\title{Fitting regularized Risk Score Models based on importance of SNPs}
 \usage{
-regularizedRiskScorer(a, balance, data, importance, k, grid.res, weight,
+regularizedRiskScorer(a, balance, logarithmical, data, importance, weight,
   formula, beta, ...)
 }
 \arguments{
 \item{a}{[\code{integer}]\cr
-Initial number of SNPs.}
+Number of SNPs used for inital penalty step, e.g. size of genotyping chip.}
 
 \item{balance}{[\code{double}]\cr
 Weight of penalty.}
@@ -22,17 +22,38 @@ to a data frame) containing the variables in the model.}
 A vector of feature weights to be used in the fitting process.
 Should be a named numeric vector.}
 
-\item{k}{[\code{integer}]\cr
-Number of folds used in cross-validation to find best w. Default is 10.}
+\item{weight}{[\code{logical}]\cr
+A logical indicating weather weights should be applied
+(\code{TRUE}) or used to identify alleles with flipped risk
+allele (\code{FALSE}).}
 
-\item{grid.res}{[\code{integer}]\cr
-Resolution of the grid for w, e.g. number of equal-sized steps. Default is 10.}
+\item{beta}{[\code{logical} or \code{function} or \code{number}]\cr
+Depends on \code{weight}: \code{TRUE}, if weights are beta
+coefficients; a \code{function} for transformation to beta
+coefficients, if \code{weight} is \code{TRUE}; a \code{number}
+giving a threshold as flip criteria, if \code{weight} is
+\code{FALSE}. See 'Details'.}
 
 \item{...}{Other parameter passed from and to other methods.}
+
+\item{[\code{logarithmical}]\cr}{A logical indicating weather penalty step size should be equal (\code{FALSE}) or logarithmic (\code{TRUE}).
+Default is \code{TRUE}.}
+
+\item{y.name}{[\code{string}]\cr
+A string giving the response variable name.}
+
+\item{feature.names}{[\code{\link{character}}]\cr
+A character vector giving the feature names.}
 }
 \value{
-Optimized number of SNPs w to use in final model.
+\code{regularizedRiskScorer} returns an object of class "\code{riskScorer}". For more information see 
+\code{\link{riskScorer}}.
 }
 \description{
-Optimizes number of used SNPs w used in final model based on penaly function.
+Fitting regularized Risk Score Models based on importance of SNPs
+}
+\details{
+Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of genotyping chip and use 
+equal step size to determine the best amount of identical genotyping chips. Set \code{a} as a an inital step size an use 
+logarithmic step size to regularize amount of SNPs (preferred all on one chip).
 }
