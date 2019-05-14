@@ -50,7 +50,7 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
   checkmate::assertNumber(a, lower = 1, upper = length(importance))
   checkmate::assertNumber(balance, lower = 1)
   if(missing(logarithmical)) {
-    checkmate::assertLogical(logarithmical <- TRUE)
+    checkmate::assertLogical(logarithmical <- FALSE)
   }
   checkmate::assertDataFrame(data, col.names = "named")
   checkmate::assertNumeric(importance, any.missing = FALSE)
@@ -69,17 +69,17 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
   }
   
   # initialize penalty function (logarithmical or equal step size)
-  if(logarithmical) {
-      steps <- ceiling(log(((length(importance)/a)+2)/2, 1.5))
-      first_snpstep <- sapply(0:steps, function (s) ceiling(a*((-2^(1-s))*(2^(s)-3^(s)))))
-      first_snpstep[1] <- 1
-      first_snpstep[which(first_snpstep > length(importance))] <- length(importance)
+  penalty <- function(a, w, balance, logarithmical) {
+    if(logarithmical) {
+      step <- ceiling(log(((w/a)+2)/2, 1.5))
+      current_penalty <- step*balance
+      return(current_penalty)
     } else {
-      steps <- ceiling(length(importance)/a)
-      first_snpstep <- sapply(0:steps, function (s) a*s)
-      first_snpstep[1] <- 1
-      first_snpstep[which(first_snpstep > length(importance))] <- length(importance)
+      step <- ceiling(length(importance)/a)
+      current_penalty <- step*balance
+      return(current_penalty)
     }
+  }
   
   # sort importance
   imp_sorted <- importance[order(abs(importance), decreasing = TRUE)]
@@ -110,14 +110,11 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
                        FUN = dev_modelling)
   
   # get penalty
-  mod_resp <- rep(0,length(importance))
-  
-  for (i in 1:(length(first_snpstep)-1)) {
-    mod_resp[(first_snpstep[i]):first_snpstep[i+1]] <- mod_deviance[first_snpstep[i]]
-  }
+  mod_penalty <- sapply(X = 1: length(mod_deviance),
+                        FUN = function (s) penalty(w = s, a = a, balance = balance, logarithmical = logarithmical))
   
   # solve optimization problem
-  best_model <- which.max(mod_resp)
+  best_model <- which.max(mod_deviance - mod_penalty)
   
   # get final model for prediction
   fin_imp <- imp_sorted[1:best_model]
