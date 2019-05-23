@@ -1,7 +1,7 @@
 
 #' @title Fitting regularized Risk Score Models based on importance of SNPs
 #'
-#' @description \{regularizedRiskScorer} is used to fit a regularized risk score models based on 
+#' @description \code{regularizedRiskScorer} is used to fit a regularized risk score models based on 
 #' importance of SNPs, the number of SNPs used in the final model is calculated by an optimization
 #' problem based on the models deviance less the current penalty for the number of used SNPs in the model.
 #'
@@ -87,7 +87,7 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
   # initialize optimization problem (min)
   dev_vector <- matrix(0, nrow = length(importance), ncol = 1)
   dev_imp <- rep(0,length(importance))
-  names(dev_imp) <- names(importance_data)
+  names(dev_imp) <- names(importance)
   # get intervall of possible scores
   min_resp <- sum(importance[importance<0])*2
   max_resp <- sum(importance[importance>0])*2
@@ -128,5 +128,8 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
                           importance = fin_imp,
                           weight = weight, 
                           beta = TRUE)
+  fin_model <- c(fin_model, balance = balance)
+  
+  class(fin_model) <- c(class(fin_model), "regularizedRiskScorer")
   return(fin_model)
 }

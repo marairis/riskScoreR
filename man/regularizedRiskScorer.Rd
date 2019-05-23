@@ -50,7 +50,9 @@ A character vector giving the feature names.}
 \code{\link{riskScorer}}.
 }
 \description{
-Fitting regularized Risk Score Models based on importance of SNPs
+\code{regularizedRiskScorer} is used to fit a regularized risk score models based on 
+importance of SNPs, the number of SNPs used in the final model is calculated by an optimization
+problem based on the models deviance less the current penalty for the number of used SNPs in the model.
 }
 \details{
 Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of genotyping chip and use 
