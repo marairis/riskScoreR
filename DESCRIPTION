@@ -9,5 +9,3 @@ Imports: data.table, checkmate, scales, mlr, ParamHelpers, dplyr
 License: GPL-3
 LazyData: TRUE
 RoxygenNote: 6.1.1
-Suggests: 
-    testthat

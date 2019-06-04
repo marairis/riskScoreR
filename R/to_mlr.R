@@ -1,4 +1,6 @@
 #' @import mlr
+#' @import ParamHelpers
+#' @import stats
 #--- riskScorer ---
 # definition of the learner
 #' @export
@@ -30,7 +32,7 @@ trainLearner.classif.riskScorer <- function(.learner, .task, .subset, .weights =
 predictLearner.classif.riskScorer <- function(.learner, .model, .newdata, ...) {
   # fallunterscheidung nach type
   p = predict(
-    risk.scorer = .model$learner.model, 
+    object = .model$learner.model, 
     newdata = .newdata, 
     type = .learner$predict.type
     )
@@ -77,7 +79,7 @@ trainLearner.classif.regularizedRiskScorer <- function(.learner, .task, .subset,
 predictLearner.classif.regularizedRiskScorer <- function(.learner, .model, .newdata, ...) {
   # fallunterscheidung nach type
   p = predict(
-    risk.scorer = .model$learner.model, 
+    object = .model$learner.model, 
     newdata = .newdata, 
     type = .learner$predict.type
     )
@@ -98,7 +100,6 @@ my.bal.fun <- function(task, model, pred, feats, extra.args) {
   return(model$learner.model$balance)
 }
 # generate measure object
-#' @export
 my.bal <- makeMeasure(
   id = "my.bal",
   name = "My Balance Measure",
