@@ -115,4 +115,4 @@ multicrit.regularizedRiskScorer <- function(a, min_balance, max_balance, k, tune
     par.set = rrs_param,
     control = rrs_tune_control
     )
-  }
+}

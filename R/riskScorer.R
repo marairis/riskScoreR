@@ -220,5 +220,4 @@ predict.riskScorer <- function(object, newdata, type = "score", ...) {
       return(as.data.frame(prob))
     }
   }
-  
 }
