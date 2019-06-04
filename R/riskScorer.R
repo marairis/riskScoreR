@@ -71,7 +71,7 @@ response <- NULL
 #'
 #' @export
 riskScorer <- function(formula, data, y.name, feature.names, importance, weight, beta = TRUE, ...) {
-
+  
   # Check input
   if(!missing(formula)) {
     checkmate::assertClass(f <- stats::as.formula(formula), "formula")
@@ -122,13 +122,13 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
       checkmate::assertNumber(beta, finite = TRUE)
     }
   }
-
+  
   risk_model <- importance[intersect(names(importance), feature.names)]
-
+  
   risk_model <- data.table::data.table(variable = names(risk_model),
-                                      weight = risk_model,
-                                      key = "variable")
-
+                                       weight = risk_model,
+                                       key = "variable")
+  
   if(weight) {
     risk_model[, flip := FALSE]
     risk_model[, weight := beta(weight)]
@@ -137,7 +137,7 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
     risk_model[, flip := weight < beta]
     risk_model[, weight := 1]
   }
-
+  
   out <- list()
   class(out) <- "riskScorer"
   out$call <- match.call()
@@ -148,7 +148,7 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
   out$target_levels <- target_levels
   out$min_score <- risk_model[weight<0, sum(2*weight)]
   out$max_score <- risk_model[weight>0, sum(2*weight)]
-
+  
   return(out)
 }
 
@@ -156,7 +156,7 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
 #'
 #' @description Obtains predictions from a fitted risk score model object.
 #'
-#' @param risk.scorer [\code{\link{riskScorer}}]\cr
+#' @param object      [\code{\link{riskScorer}}]\cr
 #'                    A fitted object of class "\code{riskScorer}".
 #' @param newdata     [\code{data.frame}]\cr
 #'                    A data frame in which to look for variables with which to
@@ -184,41 +184,41 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
 #' @import data.table
 #'
 #' @export
-predict.riskScorer <- function(risk.scorer, newdata, type = "score", ...) {
-
+predict.riskScorer <- function(object, newdata, type = "score", ...) {
+  
   # Check input
-  checkmate::assertClass(risk.scorer, "riskScorer")
+  checkmate::assertClass(object, "riskScorer")
   checkmate::assertDataFrame(newdata)
   checkmate::assertChoice(type, c("score", "response", "prob"))
-
+  
   # Select variables in risk model
-  if(!all(risk.scorer$risk_model$variable %in% colnames(newdata))) {
+  if(!all(object$risk_model$variable %in% colnames(newdata))) {
     stop("Some variables listed in the given risk model are not present in newdata!")
   } else {
-    newdata <- as.matrix(subset(newdata, select = risk.scorer$risk_model$variable))
+    newdata <- as.matrix(subset(newdata, select = object$risk_model$variable))
   }
-
-  if(risk.scorer$weight) {
+  
+  if(object$weight) {
     # don't flip genotypes
-    scores <- newdata %*% risk.scorer$risk_model$weight
+    scores <- newdata %*% object$risk_model$weight
   } else {
     # flip genotypes
-    scores <- abs(((rep_len(2, length.out = nrow(newdata))) %*% t(risk.scorer$risk_model$flip)) - newdata) %*% risk.scorer$risk_model$weight
+    scores <- abs(((rep_len(2, length.out = nrow(newdata))) %*% t(object$risk_model$flip)) - newdata) %*% object$risk_model$weight
   }
-
+  
   if(type == "score") {
     return(data.frame(score = scores))
   } else {
     # High score is bad, low score is good
-    prob <- data.frame(good = 1 - (scores - risk.scorer$min_score)/(risk.scorer$max_score - risk.scorer$min_score),
-                       bad = (scores - risk.scorer$min_score)/(risk.scorer$max_score - risk.scorer$min_score))
+    prob <- data.frame(good = 1 - (scores - object$min_score)/(object$max_score - object$min_score),
+                       bad = (scores - object$min_score)/(object$max_score - object$min_score))
     if(type == "response") {
-      prob$response <- factor(risk.scorer$target_levels[1+round(prob$bad)])
+      prob$response <- factor(object$target_levels[1+round(prob$bad)])
       return(subset(prob, select = response))
     } else {
-      colnames(prob) <- risk.scorer$target_levels
+      colnames(prob) <- object$target_levels
       return(as.data.frame(prob))
     }
   }
-
+  
 }
