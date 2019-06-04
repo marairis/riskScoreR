@@ -96,19 +96,19 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
   # transform response from 0/1 to -1/1
   dev_truth <- (2*data[, y.name])-1
   dev_data <- as.matrix(data[, names(importance)])
-  
+
   dev_modelling <- function(w) {
     # only use importance 1:w, other values = 0
     dev_imp[names(imp_sorted[1:w])] <- imp_sorted[1:w]
     # return probability
     resp_temp <- dev_data%*%dev_imp
-    resp_temp <- resp_temp/interval_resp 
+    resp_temp <- resp_temp/interval_resp
     # get devianz for each model
     dev_vector[w] <- sum(-log(1+exp(-2*dev_truth*(2*resp_temp-1))))
   }
   mod_deviance <- sapply(X = 1:length(importance), 
                        FUN = dev_modelling)
-  
+
   # get penalty
   mod_penalty <- sapply(X = 1: length(mod_deviance),
                         FUN = function (s) penalty(w = s, a = a, balance = balance, logarithmical = logarithmical))
@@ -118,15 +118,15 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, importance, w
   
   # get final model for prediction
   fin_imp <- imp_sorted[1:best_model]
-  fin_feature.names <- names(fin_imp) 
+  fin_feature.names <- names(fin_imp)
   fin_y.name <- y.name
   fin_data <- dplyr::select(data, fin_feature.names, y.name)
-  
-  fin_model <- riskScorer(data = fin_data, 
-                          y.name = fin_y.name, 
+
+  fin_model <- riskScorer(data = fin_data,
+                          y.name = fin_y.name,
                           feature.names = names(fin_imp),
                           importance = fin_imp,
-                          weight = weight, 
+                          weight = weight,
                           beta = TRUE)
   fin_model <- c(fin_model, balance = balance)
   
