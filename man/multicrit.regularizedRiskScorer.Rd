@@ -21,7 +21,7 @@ Upper limit for balance.}
 \item{k}{[\code{numeric}]\cr
 Number of cross-validation steps. Default is 10.}
 
-\item{tune_strategy}{[\code{string}]\cr
+\item{tune_strategy}{[\code{TuneMultiCritControl}]\cr
 Pass mlr \code{Tune Controll} object to spezify search strategy and resolution.
 Search strategy used in cross-validation to optimize \code{balance}. One of those implemented in
 \code{\link{mlr}} package. Default is grid search with \code{5L} resolution.#'}

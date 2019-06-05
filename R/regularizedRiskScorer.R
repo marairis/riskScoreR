@@ -80,7 +80,7 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, y.name, featu
       current_penalty <- step*balance
       return(current_penalty)
     } else {
-      step <- ceiling(length(importance)/a)
+      step <- ceiling(w/a)
       current_penalty <- step*balance
       return(current_penalty)
     }
