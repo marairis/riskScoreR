@@ -48,16 +48,12 @@
 #' \code{\link{riskScorer}}.
 #' 
 #' @export
-regularizedRiskScorer <- function(a, balance, logarithmical, data, y.name, feature.names, formula, 
-                              importance, weight, beta, ...) {
+regularizedRiskScorer <- function(a, balance, logarithmical = FALSE, data, y.name, feature.names, formula, 
+                                  importance, weight, beta, ...) {
   # check input and set default values if necessary
   checkmate::assertNumber(a, lower = 1, upper = length(importance))
   checkmate::assertNumber(balance, lower = 1)
-  if(missing(logarithmical)) {
-    checkmate::assertLogical(logarithmical <- FALSE)
-  } else {
-    checkmate::assertLogical(logarithmical)
-  }
+  checkmate::assertLogical(logarithmical)
   checkmate::assertDataFrame(data, col.names = "named")
   checkmate::assertNumeric(importance, any.missing = FALSE)
   checkmate::assertNamed(importance)
@@ -95,15 +91,23 @@ regularizedRiskScorer <- function(a, balance, logarithmical, data, y.name, featu
   min_resp <- sum(importance[importance<0])*2
   max_resp <- sum(importance[importance>0])*2
   interval_resp <- max_resp - min_resp
-  # transform response from 1/2 to -1/1
-  dev_truth <- 2*(as.numeric(data[, y.name])-1)-1
+  # if necessary transform response to -1/1
+  if(1 %in% data[, y.name] && 2 %in% data[, y.name]) {
+    dev_truth <- 2*(as.numeric(data[, y.name])-1)-1
+  } else if(0 %in% data[, y.name] && 1 %in% data[, y.name]) {
+    dev_truth <- 2*(as.numeric(data[, y.name]))-1
+  } else if(-1 %in% data[, y.name] && 1 %in% data[, y.name]) {
+    dev_truth <- as.numeric(data[, y.name])
+  } else {
+    stop("Status of disease should be given as -1/1, 0/1 or 1/2.")
+  }
   dev_data <- as.matrix(data[, names(importance)])
   dev_modelling <- function(w) {
     # only use importance 1:w, other values = 0
     dev_imp[names(imp_sorted[1:w])] <- imp_sorted[1:w]
-    # return probability
+    # return probability for class 1 
     resp_temp <- dev_data%*%dev_imp
-    resp_temp <- resp_temp/interval_resp 
+    resp_temp <- (resp_temp-min_resp)/interval_resp 
     # get devianz for each model
     dev_vector[w] <- sum(-log(1+exp(-2*dev_truth*(2*resp_temp-1))))
   }

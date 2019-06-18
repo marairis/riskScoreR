@@ -4,16 +4,16 @@
 #'
 #' @param a [\code{integer}]\cr
 #'          Number of SNPs used for inital penalty step, e.g. size of genotyping chip.
-#' @param min_balance [\code{numeric}]\cr
+#' @param min.balance [\code{numeric}]\cr
 #'          Lower limit for balance.
-#' @param max_balance [\code{numeric}]\cr
+#' @param max.balance [\code{numeric}]\cr
 #'          Upper limit for balance.
 #' @param k [\code{numeric}]\cr
 #'          Number of cross-validation steps. Default is 10.
-#' @param tune_strategy [\code{TuneMultiCritControl}]\cr
+#' @param tune.strategy [\code{TuneMultiCritControl}]\cr
 #'          Pass mlr \code{Tune Controll} object to spezify search strategy and resolution.
 #'          Search strategy used in cross-validation to optimize \code{balance}. One of those implemented in
-#'          \code{\link{mlr}} package. Default is grid search with \code{5L} resolution.#' 
+#'          \code{\link{mlr}} package. Default is grid search with \code{10L} resolution.
 #' @param logarithmical [\code{logical}]\cr 
 #'          A logical indicating weather penalty step size should be equal (\code{FALSE}) or logarithmic (\code{TRUE}).
 #'          Default is \code{TRUE}.
@@ -46,23 +46,17 @@
 #'          Other parameter passed from and to other methods.
 #'
 #' @export
-multicrit.regularizedRiskScorer <- function(a, min_balance, max_balance, k, tune_strategy, logarithmical, 
-                                      data, feature.names, y.name, formula, importance, weight, beta, ...) {
+multicrit.regularizedRiskScorer <- function(a, min.balance, max.balance, k = 10, 
+                                            tune.strategy = mlr::makeTuneMultiCritControlGrid(resolution = 10L), 
+                                            logarithmical = FALSE, data, feature.names, y.name, formula, importance, 
+                                            weight, beta, ...) {
   # check input and set default values if necessary
   checkmate::assertNumber(a, lower = 1, upper = length(importance))
-  checkmate::assertNumeric(min_balance, lower = 1, upper = max_balance)
-  checkmate::assertNumeric(max_balance, lower = min_balance)
+  checkmate::assertNumeric(min.balance, lower = 1, upper = max.balance)
+  checkmate::assertNumeric(max.balance, lower = min.balance)
   checkmate::assertNumber(k, lower = 1)
-  if(missing(tune_strategy)) {
-    tune_strategy <- mlr::makeTuneMultiCritControlGrid(resolution = 5L)
-  } else {
-    checkmate::assertClass(tune_strategy, classes = "TuneMultiCritControl")
-  }
-  if(missing(logarithmical)) {
-    checkmate::assertLogical(logarithmical <- FALSE)
-  } else {
-    checkmate::assertLogical(logarithmical)
-  }
+  checkmate::assertClass(tune.strategy, classes = "TuneMultiCritControl")
+  checkmate::assertLogical(logarithmical)
   checkmate::assertDataFrame(data, col.names = "named")
   checkmate::assertNumeric(importance, any.missing = FALSE)
   checkmate::assertNamed(importance)
@@ -96,8 +90,8 @@ multicrit.regularizedRiskScorer <- function(a, min_balance, max_balance, k, tune
   rrs_param <- ParamHelpers::makeParamSet(
     makeNumericParam(
       "balance", 
-      lower = min_balance, 
-      upper = max_balance
+      lower = min.balance, 
+      upper = max.balance
       )
     )
   rrs_desc <- mlr::makeResampleDesc(
@@ -105,7 +99,7 @@ multicrit.regularizedRiskScorer <- function(a, min_balance, max_balance, k, tune
     predict = "test",
     iters = k
     )
-  rrs_tune_control <- tune_strategy
+  rrs_tune_control <- tune.strategy
   # tune balance
   rrs_tuned <- mlr::tuneParamsMultiCrit(
     learner = rrs_learner,

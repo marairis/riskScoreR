@@ -4,7 +4,7 @@
 \alias{regularizedRiskScorer}
 \title{Fitting regularized Risk Score Models based on importance of SNPs}
 \usage{
-regularizedRiskScorer(a, balance, logarithmical, data, y.name,
+regularizedRiskScorer(a, balance, logarithmical = FALSE, data, y.name,
   feature.names, formula, importance, weight, beta, ...)
 }
 \arguments{

@@ -4,27 +4,28 @@
 \alias{multicrit.regularizedRiskScorer}
 \title{Multi-criteria tuning for regularizedRiskScorer}
 \usage{
-multicrit.regularizedRiskScorer(a, min_balance, max_balance, k,
-  tune_strategy, logarithmical, data, feature.names, y.name, formula,
+multicrit.regularizedRiskScorer(a, min.balance, max.balance, k = 10,
+  tune.strategy = mlr::makeTuneMultiCritControlGrid(resolution = 10L),
+  logarithmical = FALSE, data, feature.names, y.name, formula,
   importance, weight, beta, ...)
 }
 \arguments{
 \item{a}{[\code{integer}]\cr
 Number of SNPs used for inital penalty step, e.g. size of genotyping chip.}
 
-\item{min_balance}{[\code{numeric}]\cr
+\item{min.balance}{[\code{numeric}]\cr
 Lower limit for balance.}
 
-\item{max_balance}{[\code{numeric}]\cr
+\item{max.balance}{[\code{numeric}]\cr
 Upper limit for balance.}
 
 \item{k}{[\code{numeric}]\cr
 Number of cross-validation steps. Default is 10.}
 
-\item{tune_strategy}{[\code{TuneMultiCritControl}]\cr
+\item{tune.strategy}{[\code{TuneMultiCritControl}]\cr
 Pass mlr \code{Tune Controll} object to spezify search strategy and resolution.
 Search strategy used in cross-validation to optimize \code{balance}. One of those implemented in
-\code{\link{mlr}} package. Default is grid search with \code{5L} resolution.#'}
+\code{\link{mlr}} package. Default is grid search with \code{10L} resolution.}
 
 \item{logarithmical}{[\code{logical}]\cr 
 A logical indicating weather penalty step size should be equal (\code{FALSE}) or logarithmic (\code{TRUE}).
