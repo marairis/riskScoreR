@@ -3,7 +3,7 @@ flip <- NULL
 response <- NULL
 
 #' @title Fitting Risk Score Models
-#'
+#' @author Damian Gola
 #' @description \code{riskScorer} is used to fit a risk score models, specified
 #' by giving a symbolic description of the linear predictor and weights from a,
 #' for example GWAS, analysis.
@@ -68,7 +68,7 @@ response <- NULL
 #' }
 #'
 #' @import data.table
-#'
+#' 
 #' @export
 riskScorer <- function(formula, data, y.name, feature.names, importance, weight, beta = TRUE, ...) {
   
@@ -153,7 +153,7 @@ riskScorer <- function(formula, data, y.name, feature.names, importance, weight,
 }
 
 #' @title Predict Method for riskScoreR Fits
-#'
+#' @author Damian Gola
 #' @description Obtains predictions from a fitted risk score model object.
 #'
 #' @param object      [\code{\link{riskScorer}}]\cr

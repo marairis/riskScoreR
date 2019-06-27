@@ -11,4 +11,7 @@ featureSelection.filter
 \description{
 Creates a filter to select the optimal number of features to fit a riskScorer model.
 }
+\author{
+Mara Tews
+}
 \keyword{datasets}

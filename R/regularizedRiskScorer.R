@@ -1,6 +1,6 @@
 
 #' @title Fitting regularized Risk Score Models based on importance of SNPs
-#'
+#' @author Mara Tews
 #' @description \code{regularizedRiskScorer} is used to fit a regularized risk score models based on 
 #' importance of SNPs, the number of SNPs used in the final model is calculated by an optimization
 #' problem based on the models deviance less the current penalty for the number of used SNPs in the model.
@@ -10,8 +10,8 @@
 #' @param balance [\code{double}]\cr
 #'          Weight of penalty.
 #' @param logarithmical [\code{logical}]\cr 
-#'          A logical indicating weather penalty step size should be equal (\code{FALSE}) or logarithmic (\code{TRUE}).
-#'          Default is \code{TRUE}.
+#'          A logical indicating weather penalty step size should be equal (\code{FALSE}) or 
+#'          logarithmic (\code{TRUE}). Default is \code{TRUE}.
 #' @param data [\code{\link{data.frame}}]\cr
 #'          A data frame (or object coercible by \code{\link{as.data.frame}})
 #'          to a data frame) containing the variables in the model.
@@ -39,9 +39,10 @@
 #' @param ...
 #'          Other parameter passed from and to other methods.
 #'
-#' @details Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of genotyping chip and use 
-#' equal step size to determine the best amount of identical genotyping chips. Set \code{a} as a an inital step size an use 
-#' logarithmic step size to regularize amount of SNPs (preferred all on one chip). 
+#' @details Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of 
+#' genotyping chip and use equal step size to determine the best amount of identical genotyping chips. 
+#' Set \code{a} as a an inital step size an use logarithmic step size to regularize amount of SNPs 
+#' (preferred all on one chip). 
 #' 
 #' @return 
 #' \code{regularizedRiskScorer} returns an object of class "\code{riskScorer}". For more information see 

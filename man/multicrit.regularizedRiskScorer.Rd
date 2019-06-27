@@ -6,8 +6,8 @@
 \usage{
 multicrit.regularizedRiskScorer(a, min.balance, max.balance, k = 10,
   tune.strategy = mlr::makeTuneMultiCritControlGrid(resolution = 10L),
-  logarithmical = FALSE, data, feature.names, y.name, formula,
-  importance, weight, beta, ...)
+  logarithmical, data, feature.names, y.name, formula, importance, weight,
+  beta, ...)
 }
 \arguments{
 \item{a}{[\code{integer}]\cr
@@ -66,4 +66,7 @@ giving a threshold as flip criteria, if \code{weight} is
 }
 \description{
 Multi-criteria tuning for balance and number of used features for regularizedRiskScorer model.
+}
+\author{
+Mara Tews
 }

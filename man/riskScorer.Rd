@@ -81,3 +81,6 @@ weights. If beta coefficients are given (default) this threshold is set to 0.
 It would be 1 if the weights are odds ratios. The parameter \code{beta} can
 be set to any finite number.
 }
+\author{
+Damian Gola
+}

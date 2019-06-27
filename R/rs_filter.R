@@ -1,8 +1,9 @@
 #' @title Feature selection filter
-#' 
+#' @author Mara Tews
 #' @description Creates a filter to select the optimal number of features to fit a riskScorer model.
 #' 
 #' @import mlr
+#' 
 #' @export
 featureSelection.filter <- makeFilter(
   name = "featureSelection.filter",

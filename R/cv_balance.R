@@ -1,5 +1,5 @@
 #' @title Multi-criteria tuning for regularizedRiskScorer
-#'
+#' @author Mara Tews
 #' @description Multi-criteria tuning for balance and number of used features for regularizedRiskScorer model. 
 #'
 #' @param a [\code{integer}]\cr
@@ -41,14 +41,13 @@
 #'          coefficients, if \code{weight} is \code{TRUE}; a \code{number}
 #'          giving a threshold as flip criteria, if \code{weight} is
 #'          \code{FALSE}.
-#'  
 #' @param ...
 #'          Other parameter passed from and to other methods.
 #'
 #' @export
 multicrit.regularizedRiskScorer <- function(a, min.balance, max.balance, k = 10, 
                                             tune.strategy = mlr::makeTuneMultiCritControlGrid(resolution = 10L), 
-                                            logarithmical = FALSE, data, feature.names, y.name, formula, importance, 
+                                            logarithmical, data, feature.names, y.name, formula, importance, 
                                             weight, beta, ...) {
   # check input and set default values if necessary
   checkmate::assertNumber(a, lower = 1, upper = length(importance))

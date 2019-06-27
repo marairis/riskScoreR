@@ -1,9 +1,12 @@
+#' @author Mara Tews
+#' @description Integrates learner to mlr and creatures new balance measure.
+#' 
 #' @import mlr
 #' @import ParamHelpers
 #' @import stats
+
 #--- riskScorer ---
 # definition of the learner
-#' @export
 makeRLearner.classif.riskScorer <- function() {
   makeRLearnerClassif(
     cl = "classif.riskScorer",
@@ -19,7 +22,6 @@ makeRLearner.classif.riskScorer <- function() {
     )
   }
 # creating the training function of the learner
-#' @export
 trainLearner.classif.riskScorer <- function(.learner, .task, .subset, .weights = NULL, ...) {
   riskScoreR::riskScorer(
     data = getTaskData(.task, .subset),
@@ -28,7 +30,6 @@ trainLearner.classif.riskScorer <- function(.learner, .task, .subset, .weights =
     )
   }
 # creating the prediction method
-#' @export
 predictLearner.classif.riskScorer <- function(.learner, .model, .newdata, ...) {
   # fallunterscheidung nach type
   p = predict(
@@ -49,7 +50,6 @@ registerS3method("predictLearner", "riskScorer", predictLearner.classif.riskScor
 
 #--- regularizedRiskScorer ---
 # definition of the learner
-#' @export
 makeRLearner.classif.regularizedRiskScorer <- function() {
   makeRLearnerClassif(
     cl = "classif.regularizedRiskScorer",

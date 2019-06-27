@@ -40,3 +40,6 @@ Predicted probabilities are obtained by rescaling the distribution
 of scores to \eqn{[0,1]}. Predicted class labels are obtained by rounding the
 predicted probabilites.
 }
+\author{
+Damian Gola
+}

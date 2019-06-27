@@ -15,8 +15,8 @@ Number of SNPs used for inital penalty step, e.g. size of genotyping chip.}
 Weight of penalty.}
 
 \item{logarithmical}{[\code{logical}]\cr 
-A logical indicating weather penalty step size should be equal (\code{FALSE}) or logarithmic (\code{TRUE}).
-Default is \code{TRUE}.}
+A logical indicating weather penalty step size should be equal (\code{FALSE}) or 
+logarithmic (\code{TRUE}). Default is \code{TRUE}.}
 
 \item{data}{[\code{\link{data.frame}}]\cr
 A data frame (or object coercible by \code{\link{as.data.frame}})
@@ -61,7 +61,11 @@ importance of SNPs, the number of SNPs used in the final model is calculated by 
 problem based on the models deviance less the current penalty for the number of used SNPs in the model.
 }
 \details{
-Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of genotyping chip and use 
-equal step size to determine the best amount of identical genotyping chips. Set \code{a} as a an inital step size an use 
-logarithmic step size to regularize amount of SNPs (preferred all on one chip).
+Pentalty function can have equal or logarithmic step sizes. Set \code{a} as size of 
+genotyping chip and use equal step size to determine the best amount of identical genotyping chips. 
+Set \code{a} as a an inital step size an use logarithmic step size to regularize amount of SNPs 
+(preferred all on one chip).
+}
+\author{
+Mara Tews
 }
